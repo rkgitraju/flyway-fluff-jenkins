@@ -133,6 +133,7 @@ def run_flyway_migration(script_path):
     
     # Command to run: mvn clean compile flyway:migrate -Pdb2-local
     # We use a single string command for reliability with shell=True on Windows
+    # maven_command = f"mvn clean compile flyway:migrate -P{TARGET_PROFILE}"
     maven_command = [
         'mvn',
         'clean',
