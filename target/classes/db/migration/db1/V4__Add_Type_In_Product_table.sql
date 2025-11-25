@@ -1,1 +1,0 @@
-ALTER TABLE products ADD COLUMN type varchar(50);

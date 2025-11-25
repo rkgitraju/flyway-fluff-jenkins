@@ -19,22 +19,22 @@ migra --unsafe postgresql://airflow:airflow@localhost:5432/db2 postgresql://airf
 
 
 -- jenkins script for poweshell .
-#!/bin/bash
-set -e
+ #!/bin/bash
 
-echo "--- 1. BUILDING AUTOMATION RUNNER IMAGE ---"
-# Build image (uses current Dockerfile with 'COPY auto_migrate_schema.py /app/')
+set -e
+echo "--- 1. BUILDING AUTOMATION RUNNER IMAGE (FINAL ATTEMPT) ---"
+# Force build to ensure the file is copied into the image
 docker build --no-cache -t schema-sync-runner-final .
 
-echo "--- 2. EXECUTING SCHEMA SYNCHRONIZATION ---"
-
-# CRITICAL FIX: Use --entrypoint to tell Docker to execute /bin/bash 
-# instead of the base image's default entrypoint script (mvn-entrypoint.sh).
+echo "--- 2. EXECUTING SCHEMA SYNCHRONIZATION (MOUNT FIX) ---"
+# CRITICAL FIX: We are removing the volume mount for the code (-v "$(pwd)":/app)
+# This relies entirely on the file being built INTO the image.
+# We ADD A NEW MOUNT for the Flyway SRC directory ONLY so it can write the SQL file.
 docker run --rm \
   --entrypoint "/bin/bash" \
-  --network=common-network \
-  -v "$(pwd)":/app \
+  --network=flyway-project1_common-network \
+  -v "$(pwd)/src":/app/src \
   schema-sync-runner-final \
-  -c "python /app/auto_migrate_schema.py"
+  -c "echo '--- Starting Python Script from Image... ---' && python /app/auto_migrate_schema.py"
 
 echo "--- 3. PIPELINE COMPLETE ---"
