@@ -68,7 +68,7 @@ def run_migra_and_generate_script():
         
         result = subprocess.run(
             migra_command, 
-            stdout=subprocess.PIPE,  # Capture stdout
+            stdout=subprocess.PIPE, # Capture stdout
             stderr=subprocess.STDOUT, # Merge stderr (UserWarning) into stdout
             text=True, 
             # check=True is removed for Migra since non-zero exit codes can occur on successful diff
@@ -138,7 +138,7 @@ def run_flyway_migration(script_path):
         'clean',
         'compile',
         'flyway:migrate',
-        '-P' + TARGET_PROFILE,  # Combine '-P' with the actual profile name variable
+        '-P' + TARGET_PROFILE, # Combine '-P' with the actual profile name variable
     ]
     
     try:
