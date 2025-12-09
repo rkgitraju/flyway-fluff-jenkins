@@ -70,7 +70,7 @@ def run_migra_and_generate_script():
             stdout=subprocess.PIPE,  # Capture stdout
             stderr=subprocess.STDOUT, # Merge stderr (UserWarning) into stdout
             text=True, 
-            check=True
+            # check=True
         )
         
         # The result.stdout now contains both regular output and the warning lines.
@@ -80,7 +80,7 @@ def run_migra_and_generate_script():
         diff_lines = []
         for line in output_lines:
             # ignore for diagnostic/warning indicators
-            if 'UserWarning:' in line or 'pkg_resources' in line or 'schemainspect' in line:
+            if 'UserWarning:' in line or 'pkg_resources' in line or 'schemainspect' in line or 'flyway_schema_history' in line:
                 continue
             
             diff_lines.append(line)
@@ -92,8 +92,13 @@ def run_migra_and_generate_script():
         sys.exit(1)
     except subprocess.CalledProcessError as e:
         print("❌ ERROR: Migra failed unexpectedly.")
-        print("--- Subprocess Error (stderr) ---")
-        print(e.stderr) 
+        print("--- Subprocess Error (STDOUT/STDERR) ---")
+        if e.stdout:
+            print(e.stdout) 
+        else:
+            print("No output captured. Check container logs for uncaptured errors.")
+
+        print(f"Return Code : {e.returncode}")
         sys.exit(1)
     
     # 2. Check for changes
@@ -125,41 +130,27 @@ def run_migra_and_generate_script():
 
 def run_flyway_migration(script_path):
     """Runs the Maven Flyway migrate command with the necessary environment fix."""
-    
-    # Set the MAVEN_OPTS environment variable for the subprocess
     os.environ['MAVEN_OPTS'] = MAVEN_OPTS_FIX
-    
-    print(f"\nRunning Flyway migration on profile '{TARGET_PROFILE}'...")
-    
-    # Command to run: mvn clean compile flyway:migrate -Pdb2-local
-    # We use a single string command for reliability with shell=True on Windows
-    # maven_command = f"mvn clean compile flyway:migrate -P{TARGET_PROFILE}"
-    maven_command = [
-        'mvn',
-        'clean',
-        'compile',
-        'flyway:migrate',
-        '-P' + TARGET_PROFILE,  # Combine '-P' with the actual profile name variable
-    ]
+    maven_command = f"mvn clean compile flyway:migrate -P{TARGET_PROFILE}"
+    maven_command += " -U"
     
     try:
-        # Execute the Maven command
-        subprocess.run(
+        result = subprocess.run(
             maven_command,
-            cwd='/app',
+            shell=True, 
             env=os.environ,
             check=True,
-            capture_output=True, # Captures both stdout and stderr
-            text=True,           # Decodes output to string
-            stderr=subprocess.STDOUT # CRITICAL: Merges stderr into stdout
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True, 
         )
         print("✅ Flyway migration SUCCESSFUL.")
         return True
     except subprocess.CalledProcessError as e:
         print("\n❌ Flyway migration FAILED.")
-        delete_generated_file(script_path)
         print("--- stderr Error : ")
         print(e.stdout) 
+        delete_generated_file(script_path)
         return False
     finally:
         # Clear the environment variable after execution (good practice)
@@ -168,16 +159,19 @@ def run_flyway_migration(script_path):
 
 if __name__ == "__main__":
     generated_file = run_migra_and_generate_script()
-    
     if generated_file is not None :
-        print("🤖 Automation Mode: Executing migration without user confirmation.")
-        
-        success = run_flyway_migration(generated_file)
-        
-        if success:
-            print("\n✨ END OF PIPELINE: Schema synchronization successful!")
-        else:
-            print("\n❌ END OF PIPELINE: Schema synchronization failed during Flyway run.")
-            sys.exit(1) 
+        user_input = input(f"\n❓ Do you want to proceed with the Flyway migration? (yes/no): ").strip().lower()
+        if user_input != 'yes':
+            print("Migration cancelled by user.")
+            delete_generated_file(generated_file)
+            sys.exit(0)
+        else :
+            success = run_flyway_migration(generated_file)
+            if success:
+                print("\n END OF PIPELINE: Schema synchronization successful!")
+            else:
+                print("\n❌ END OF PIPELINE: Schema synchronization failed during Flyway run.")
+                delete_generated_file(generated_file)
+                sys.exit(1) 
     else:
-        print("\n✅ END OF PIPELINE: No changes to apply.")
+        print("\n END OF PIPELINE: No changes to apply.")

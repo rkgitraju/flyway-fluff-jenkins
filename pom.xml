@@ -57,7 +57,7 @@
         <profile>
             <id>db1-local</id>
             <properties>
-                <db.url>jdbc:postgresql://db1:5432/db1</db.url>
+                <db.url>jdbc:postgresql://localhost:5432/db1</db.url>
                 <flyway.locations>classpath:db/migration/db1</flyway.locations>
             </properties>
         </profile>
@@ -65,7 +65,7 @@
         <profile>
             <id>db2-local</id>
             <properties>
-                 <db.url>jdbc:postgresql://db2:5432/db2</db.url>
+                 <db.url>jdbc:postgresql://localhost:5432/db2</db.url>
                 <flyway.locations>classpath:db/migration/db2</flyway.locations>
             </properties>
         </profile>
