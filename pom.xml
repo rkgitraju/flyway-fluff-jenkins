@@ -68,6 +68,19 @@
                  <db.url>jdbc:postgresql://localhost:5432/db2</db.url>
                 <flyway.locations>classpath:db/migration/db2</flyway.locations>
             </properties>
+
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.flywaydb</groupId>
+                        <artifactId>flyway-maven-plugin</artifactId>
+                        <configuration>
+                            <cleanDisabled>false</cleanDisabled>
+                            
+                            </configuration>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
     </profiles>
 </project>

@@ -98,3 +98,9 @@ Validate DML commands with custom rules:
 ```bash
 sqlfluff lint src/main/resources/db/migration/db2 --config .sqlfluff
 ```
+
+<!-- repair & clean -->
+ $env:MAVEN_OPTS="-Duser.timezone=Asia/Kolkata"; mvn flyway:repair -Pdb2-local
+
+ <!-- below command will dekete all tables -->
+ $env:MAVEN_OPTS="-Duser.timezone=Asia/Kolkata"; mvn flyway:clean -Pdb2-local
