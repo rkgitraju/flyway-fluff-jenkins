@@ -10,8 +10,8 @@ from datetime import datetime
 from collections import defaultdict
 
 # --- Configuration (UPDATE THESE VALUES) ---
-SOURCE_DB_URL = "postgresql://airflow:airflow@localhost:5432/db1" 
-TARGET_DB_URL = "postgresql://airflow:airflow@localhost:5432/db2"
+SOURCE_DB_URL = "postgresql://airflow:airflow@db1:5432/db1" 
+TARGET_DB_URL = "postgresql://airflow:airflow@db2:5432/db2"
 
 MIGRATION_DIR = "src/main/resources/db/migration/db2"
 TARGET_PROFILE = "db2-local"
@@ -654,15 +654,6 @@ if __name__ == "__main__":
             print("\n❌ Validation failed")
             delete_generated_files(generated_files)
             sys.exit(1)
-
-        # Confirm
-        print(f"\n{'=' * 60}")
-        user_input = input(f"❓ Run Flyway migration for {len(generated_files)} file(s)? (yes/no): ").strip().lower()
-        
-        if user_input != 'yes':
-            print("Cancelled by user.")
-            delete_generated_files(generated_files)
-            sys.exit(0)
         
         # Migrate
         success = run_flyway_migration(generated_files)

@@ -15,3 +15,6 @@ WORKDIR /app
 COPY auto_migrate_schema.py /app/
 COPY pom.xml /app/
 COPY src /app/src
+
+# Ensure permissions are correct
+RUN chmod +x /app/auto_migrate_schema.py
